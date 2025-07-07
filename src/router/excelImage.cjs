@@ -26,24 +26,35 @@ function getImageExtensionFromUrl(imageUrl) {
     }
 }
 
-// 下载图片
-async function downloadImageBuffer(url) {
-    try {
-        const response = await axios.get(url, {
-            responseType: 'arraybuffer'
-        });
-        return {
-            url,
-            buffer: Buffer.from(response.data, 'binary'),
-            success: true
-        };
-    } catch (err) {
-        return {
-            url,
-            buffer: null,
-            success: false,
-            error: err.message
-        };
+// 下载图片，增加重试和日志
+async function downloadImageBuffer(url, maxRetries = 3) {
+    let attempt = 0;
+    while (attempt < maxRetries) {
+        try {
+            console.log(`[下载图片] 尝试第${attempt + 1}次: ${url}`);
+            const response = await axios.get(url, {
+                responseType: 'arraybuffer'
+            });
+            console.log(`[下载图片] 成功: ${url}`);
+            return {
+                url,
+                buffer: Buffer.from(response.data, 'binary'),
+                success: true
+            };
+        } catch (err) {
+            attempt++;
+            console.warn(`[下载图片] 失败: ${url}，第${attempt}次，错误: ${err.message}`);
+            if (attempt >= maxRetries) {
+                return {
+                    url,
+                    buffer: null,
+                    success: false,
+                    error: err.message
+                };
+            }
+            // 可选：等待一段时间再重试
+            await new Promise(res => setTimeout(res, 500));
+        }
     }
 }
 
@@ -131,24 +142,31 @@ async function processExcelWithImages(inputFilePath) {
     return tempOutput;
 }
 
-// 路由处理
 router.post('/upload', upload.single('excel'), async (req, res) => {
     try {
         const filePath = req.file.path;
         const resultFilePath = await processExcelWithImages(filePath);
 
+        // 设置响应头
+        res.setHeader('Content-Disposition', 'attachment; filename="output_with_images.xlsx"');
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
         // 发送处理后的 Excel 文件
-        res.download(resultFilePath, 'output_with_images.xlsx', err => {
-
+        res.sendFile(resultFilePath, err => {
             // 清理临时文件
-            fs.unlink(filePath, err => {
-                if (err) console.warn('删除上传文件失败:', err.message);
+            fs.unlink(filePath, unlinkErr => {
+                if (unlinkErr) console.warn('删除上传文件失败:', unlinkErr.message);
             });
-            fs.unlink(resultFilePath, err => {
-                if (err) console.warn('删除生成文件失败:', err.message);
+            fs.unlink(resultFilePath, unlinkErr => {
+                if (unlinkErr) console.warn('删除生成文件失败:', unlinkErr.message);
             });
 
-            if (err) console.error('下载失败:', err.message);
+            if (err) {
+                console.error('发送文件失败:', err.message);
+                if (!res.headersSent) {
+                    res.status(500).send('文件发送失败');
+                }
+            }
         });
 
     } catch (err) {
