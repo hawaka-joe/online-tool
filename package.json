@@ -1,0 +1,30 @@
+{
+  "name": "online-tool",
+  "version": "1.0.0",
+  "description": "A online tool site with frontend page",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hawaka-joe/online-tool.git"
+  },
+  "keywords": [
+    "node",
+    "express"
+  ],
+  "author": "ZHOU HUIWEI",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hawaka-joe/online-tool/issues"
+  },
+  "homepage": "https://github.com/hawaka-joe/online-tool#readme",
+  "dependencies": {
+    "axios": "^1.10.0",
+    "cors": "^2.8.5",
+    "exceljs": "^4.4.0",
+    "express": "^5.1.0",
+    "multer": "^2.0.1"
+  }
+}

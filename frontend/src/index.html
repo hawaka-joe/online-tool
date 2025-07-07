@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+
+    <meta charset="UTF-8" />
+    <title>Online Tool</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #uploadForm {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        input[type="file"] {
+            margin: 20px 0;
+            width: 60%;
+        }
+
+        button {
+            padding: 8px 16px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="excelImage">
+        <h2>Excel 图片嵌入工具</h1>
+        <form id="uploadForm">
+            <input type="file" name="excel" accept=".xlsx" required />
+            <br />
+            <button type="submit">上传并处理</button>
+        </form>
+    </div>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const fileInput = form.querySelector('input[type="file"]');
+            if (!fileInput.files.length) return alert('请选择一个 Excel 文件');
+
+            const formData = new FormData();
+            formData.append('excel', fileInput.files[0]);
+
+            try {
+                const response = await fetch('http://localhost:80/excel/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) throw new Error('上传失败');
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'output_with_images.xlsx';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+            } catch (error) {
+                console.error(error);
+                alert('上传或处理失败');
+            }
+        });
+    </script>
+
+</body>
+
+</html>
