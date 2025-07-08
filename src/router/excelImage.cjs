@@ -14,7 +14,10 @@ const upload = multer({
     dest: tmpDir
 });
 
-// 从 URL 中提取图片扩展名
+/**
+ * 从 URL 中提取图片扩展名
+ * 用于判断是否替换单元格内容
+ */
 function getImageExtensionFromUrl(imageUrl) {
     try {
         const parsed = new URL(imageUrl);
