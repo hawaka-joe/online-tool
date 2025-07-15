@@ -155,7 +155,7 @@
             const formData = new FormData();
             formData.append('excel', fileInput.files[0]);
             try {
-                const response = await fetch('http://localhost:80/excel/upload', {
+                const response = await fetch('http://120.26.1.6:80/excel/upload', {
                     method: 'POST',
                     body: formData,
                 });
