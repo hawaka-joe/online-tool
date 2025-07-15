@@ -74,9 +74,10 @@ async function processExcelWithImages(inputFilePath) {
             if (!row) continue;
 
             for (let cell of row._cells) {
-                if (!cell || typeof cell.value !== 'string') continue;
+                const cellValue = cell.value?.text ?? cell.value;
+                if (!cell || typeof cellValue !== 'string')
+                    continue;
 
-                const cellValue = cell.value;
                 if (cellValue.startsWith('http')) {
                     const ext = getImageExtensionFromUrl(cellValue);
                     if (!ext) continue;
