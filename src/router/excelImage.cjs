@@ -82,11 +82,22 @@ async function processExcelWithImages(inputFilePath) {
                     const ext = getImageExtensionFromUrl(cellValue);
                     if (!ext) continue;
 
-                    imageCellMap.set(cellValue, {
-                        worksheet,
-                        cell,
-                        ext
-                    });
+                    const cellMapValue = imageCellMap.get(cellValue);
+                    if (cellMapValue) {
+                        cellMapValue.push({
+                            worksheet,
+                            cell,
+                            ext
+                        });
+                    }
+                    else {
+                        imageCellMap.set(cellValue, [{
+                            worksheet,
+                            cell,
+                            ext
+                        }]);
+                    }
+                    
                     imageTasks.push(cellValue);
                 }
             }
@@ -105,39 +116,41 @@ async function processExcelWithImages(inputFilePath) {
     for (const result of downloadResults) {
         if (!result.success) continue;
 
-        const cellInfo = imageCellMap.get(result.url);
-        if (!cellInfo) continue;
+        const cellInfoArr = imageCellMap.get(result.url);
+        if (!cellInfoArr) continue;
 
-        const {
-            worksheet,
-            cell,
-            ext
-        } = cellInfo;
-        try {
-            const imageId = workbook.addImage({
-                buffer: result.buffer,
-                extension: ext
-            });
-
+        for (const cellInfo of cellInfoArr) {
             const {
-                row: rowIndex,
-                col: colIndex
-            } = cell;
-            worksheet.addImage(imageId, {
-                tl: {
-                    col: colIndex - 1,
-                    row: rowIndex - 1
-                },
-                ext: {
-                    width: 100,
-                    height: 100
-                },
-                editAs: 'oneCell'
-            });
+                worksheet,
+                cell,
+                ext
+            } = cellInfo;
+            try {
+                const imageId = workbook.addImage({
+                    buffer: result.buffer,
+                    extension: ext
+                });
 
-            cell.value = null;
-        } catch (err) {
-            console.error(`图片嵌入失败: ${result.url}`, err.message);
+                const {
+                    row: rowIndex,
+                    col: colIndex
+                } = cell;
+                worksheet.addImage(imageId, {
+                    tl: {
+                        col: colIndex - 1,
+                        row: rowIndex - 1
+                    },
+                    ext: {
+                        width: 100,
+                        height: 100
+                    },
+                    editAs: 'oneCell'
+                });
+
+                cell.value = null;
+            } catch (err) {
+                console.error(`图片嵌入失败: ${result.url}`, err.message);
+            }
         }
     }
 
